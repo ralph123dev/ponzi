@@ -37,6 +37,8 @@ export default function Footer() {
                 { label: 'Trading Spot', href: '#' },
                 { label: 'Matières Agricoles', href: '/agriculture' },
                 { label: 'Immo Fractionné', href: '/immobilier' },
+                { label: 'Forêts Durables', href: '/foret' },
+                { label: 'Métaux Précieux', href: '/metaux' },
                 { label: 'Staking', href: '#' }
               ] 
             },

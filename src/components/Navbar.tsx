@@ -1,12 +1,15 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { TrendingUp, Menu, X, ChevronDown, Leaf, Building2 } from 'lucide-react'
+import { TrendingUp, Menu, X, ChevronDown, Leaf, Building2, Trees, Coins, LogOut, User as UserIcon } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showInvestMenu, setShowInvestMenu] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const location = useLocation()
+  const { user, signOut } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -19,7 +22,11 @@ export default function Navbar() {
   const investItems = [
     { label: 'Matières premières agricoles', href: '/agriculture', icon: Leaf },
     { label: 'Immobilier fractionné', href: '/immobilier', icon: Building2 },
+    { label: 'Programmes forestiers', href: '/foret', icon: Trees },
+    { label: 'Métaux précieux', href: '/metaux', icon: Coins },
   ]
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur'
 
   return (
     <nav
@@ -77,7 +84,7 @@ export default function Navbar() {
                 </button>
 
                 {showInvestMenu && (
-                  <div className="absolute top-full left-0 w-64 pt-2 animate-slide-up">
+                  <div className="absolute top-full left-0 w-72 pt-2 animate-slide-up">
                     <div className="glass rounded-xl border border-border shadow-2xl overflow-hidden p-2" style={{ background: 'rgba(15,23,42,0.95)' }}>
                       {investItems.map((item) => (
                         <Link
@@ -116,14 +123,42 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Auth Buttons */}
+          {/* Auth Buttons or User Profile */}
           <div className="hidden md:flex items-center space-x-3">
-            <Link to="/login" className="btn btn-outline">
-              Se connecter
-            </Link>
-            <Link to="/register" className="btn btn-primary">
-              S'inscrire
-            </Link>
+            {user ? (
+              <div className="relative" onMouseEnter={() => setShowUserMenu(true)} onMouseLeave={() => setShowUserMenu(false)}>
+                <button className="flex items-center gap-3 px-4 py-2 rounded-xl glass transition-all" style={{ border: '1px solid rgba(99,102,241,0.2)' }}>
+                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <UserIcon className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: '#e2e8f0' }}>{displayName}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showUserMenu ? 'rotate-180' : ''}`} style={{ color: '#64748b' }} />
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute top-full right-0 w-48 pt-2 animate-slide-up">
+                    <div className="glass rounded-xl border border-border shadow-2xl overflow-hidden p-1" style={{ background: 'rgba(15,23,42,0.95)' }}>
+                      <button 
+                        onClick={() => signOut()}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-all"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Déconnexion
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-outline">
+                  Se connecter
+                </Link>
+                <Link to="/register" className="btn btn-primary">
+                  S'inscrire
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile */}
@@ -141,6 +176,18 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden glass animate-slide-up" style={{ borderTop: '1px solid rgba(99,102,241,0.1)' }}>
           <div className="px-4 py-6 space-y-2">
+            {user && (
+              <div className="flex items-center gap-3 px-4 py-4 rounded-xl bg-primary/5 mb-4 border border-primary/10">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <UserIcon className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: '#e2e8f0' }}>{displayName}</p>
+                  <p className="text-xs" style={{ color: '#64748b' }}>{user.email}</p>
+                </div>
+              </div>
+            )}
+
             {!isAuthPage && (
               <>
                 {[
@@ -195,12 +242,25 @@ export default function Navbar() {
                 <div style={{ height: '1px', background: '#1e293b', margin: '1rem 0' }} />
               </>
             )}
-            <Link to="/login" onClick={() => setMobileOpen(false)} className="block w-full text-center btn btn-outline mb-2">
-              Se connecter
-            </Link>
-            <Link to="/register" onClick={() => setMobileOpen(false)} className="block w-full text-center btn btn-primary">
-              S'inscrire
-            </Link>
+
+            {user ? (
+              <button 
+                onClick={() => { signOut(); setMobileOpen(false); }}
+                className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-xl text-red-400 bg-red-500/5 hover:bg-red-500/10 transition-all font-medium"
+              >
+                <LogOut className="w-5 h-5" />
+                Déconnexion
+              </button>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="block w-full text-center btn btn-outline mb-2">
+                  Se connecter
+                </Link>
+                <Link to="/register" onClick={() => setMobileOpen(false)} className="block w-full text-center btn btn-primary">
+                  S'inscrire
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
