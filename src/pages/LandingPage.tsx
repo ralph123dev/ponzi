@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Shield, Zap, Lock, TrendingUp, ArrowRight, ChevronDown, Star, Users, BarChart3, Coins } from 'lucide-react'
+import { Shield, Zap, Lock, ArrowRight, ChevronDown, Star, Users, BarChart3, Coins } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
@@ -71,7 +71,7 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-              <Link to={user ? "/#cryptos" : "/register"} className="btn btn-primary text-base px-8 py-4 flex items-center gap-2 group">
+              <Link to={user ? "/dashboard" : "/register"} className="btn btn-primary text-base px-8 py-4 flex items-center gap-2 group">
                 {user ? "Débuter l'investissement" : "Commencer maintenant"}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -267,7 +267,7 @@ export default function LandingPage() {
           <p className="mb-10 max-w-xl mx-auto" style={{ color: '#64748b' }}>
             Rejoignez plus de 2 millions d'investisseurs. Créez votre compte gratuitement en moins de 2 minutes.
           </p>
-          <Link to={user ? "/#cryptos" : "/register"} className="btn btn-primary text-base px-10 py-4 inline-flex items-center gap-2 group">
+          <Link to={user ? "/dashboard" : "/register"} className="btn btn-primary text-base px-10 py-4 inline-flex items-center gap-2 group">
             {user ? "Débuter l'investissement" : "Créer mon compte gratuitement"}
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>

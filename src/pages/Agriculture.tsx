@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
 import { Leaf, ArrowRight, Shield, TrendingUp, BarChart3, Globe, Coffee, Wheat, Droplets } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function Agriculture() {
+  const { user } = useAuth()
+  
   const assets = [
     { name: 'Café', desc: 'Marché mondial du café Arabica et Robusta.', icon: Coffee, color: '#964B00' },
     { name: 'Cacao', desc: 'Investissez dans la production de cacao premium.', icon: Droplets, color: '#3d1c02' },
@@ -25,8 +28,8 @@ export default function Agriculture() {
           <p className="text-lg md:text-xl max-w-3xl mx-auto mb-10" style={{ color: '#64748b' }}>
             Café, cacao, blé, maïs — investissez dans des actifs réels liés aux marchés mondiaux des commodités. Soutenez l'agriculture durable tout en générant des rendements stables.
           </p>
-          <Link to="/register" className="btn btn-primary px-10 py-4 text-lg gap-2">
-            Commencer à investir <ArrowRight className="w-5 h-5" />
+          <Link to={user ? "/dashboard" : "/register"} className="btn btn-primary px-10 py-4 text-lg gap-2">
+            {user ? "Accéder au tableau de bord" : "Commencer à investir"} <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </section>
@@ -75,7 +78,9 @@ export default function Agriculture() {
           <p className="mb-10" style={{ color: '#64748b' }}>
             Rejoignez Crypto Invest et accédez à des marchés auparavant réservés aux institutionnels.
           </p>
-          <Link to="/register" className="btn btn-primary px-10 py-4">Créer mon compte</Link>
+          <Link to={user ? "/dashboard" : "/register"} className="btn btn-primary px-10 py-4">
+            {user ? "Accéder au tableau de bord" : "Créer mon compte"}
+          </Link>
         </div>
       </section>
     </div>

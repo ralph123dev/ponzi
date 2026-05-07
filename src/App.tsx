@@ -8,6 +8,7 @@ import Agriculture from './pages/Agriculture'
 import RealEstate from './pages/RealEstate'
 import Forestry from './pages/Forestry'
 import PreciousMetals from './pages/PreciousMetals'
+import Dashboard from './pages/Dashboard'
 import { AuthProvider } from './context/AuthContext'
 import './App.css'
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="/immobilier" element={<RealEstate />} />
             <Route path="/foret" element={<Forestry />} />
             <Route path="/metaux" element={<PreciousMetals />} />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </main>
         <Footer />

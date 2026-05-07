@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
-import { Trees, ArrowRight, Shield, BarChart3, Globe, Zap, Sun } from 'lucide-react'
+import { Trees, ArrowRight, Shield, Globe, Zap, Sun } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function Forestry() {
+  const { user } = useAuth()
+
   const benefits = [
     { title: 'Valorisation Carbone', desc: 'Générez des revenus grâce aux crédits carbone issus de la séquestration par vos forêts.', icon: Zap, color: '#3b82f6' },
     { title: 'Gestion Durable', desc: 'Exploitation responsable certifiée par les plus hauts standards environnementaux.', icon: Trees, color: '#10b981' },
@@ -24,8 +27,8 @@ export default function Forestry() {
           <p className="text-lg md:text-xl max-w-3xl mx-auto mb-10" style={{ color: '#64748b' }}>
             Investissement dans la gestion durable de forêts certifiées, avec valorisation carbone. Participez à la lutte contre le changement climatique tout en valorisant votre capital.
           </p>
-          <Link to="/register" className="btn btn-primary px-10 py-4 text-lg gap-2">
-            Investir dans les forêts <ArrowRight className="w-5 h-5" />
+          <Link to={user ? "/dashboard" : "/register"} className="btn btn-primary px-10 py-4 text-lg gap-2">
+            {user ? "Accéder au tableau de bord" : "Investir dans les forêts"} <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </section>
@@ -51,7 +54,9 @@ export default function Forestry() {
           <p className="mb-10" style={{ color: '#64748b' }}>
             Crypto Invest vous permet d'accéder au marché fermé des actifs forestiers avec une transparence totale et une liquidité optimisée.
           </p>
-          <Link to="/register" className="btn btn-primary px-10 py-4">Créer mon compte</Link>
+          <Link to={user ? "/dashboard" : "/register"} className="btn btn-primary px-10 py-4">
+            {user ? "Accéder au tableau de bord" : "Créer mon compte"}
+          </Link>
         </div>
       </section>
     </div>

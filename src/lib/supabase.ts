@@ -4,7 +4,9 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase URL or Anon Key is missing in .env')
+  console.error('Supabase URL or Anon Key is missing in .env')
+} else {
+  console.log('Supabase client initialized with URL:', supabaseUrl)
 }
 
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '')
