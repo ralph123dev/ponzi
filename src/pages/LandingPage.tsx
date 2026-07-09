@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Shield, Zap, Lock, ArrowRight, ChevronDown, Star, Users, BarChart3, Coins } from 'lucide-react'
+import { Shield, Zap, Lock, ArrowRight, ChevronDown, Star, Users, BarChart3 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
@@ -11,6 +11,11 @@ import adaLogo from '../assets/cardano.jpg'
 import xrpLogo from '../assets/xpr.jpg'
 import orangeLogo from '../assets/orange.png'
 import mtnLogo from '../assets/mtn.jpg'
+import analysesImage from '../assets/img/Analyses avancées.jpg'
+import communauteImage from '../assets/img/Communauté active.jpg'
+import securiteImage from '../assets/img/securité_maximal.jpg'
+import stockageImage from '../assets/img/Stockage à froid.jpg'
+import tradingImage from '../assets/img/Trading ultra-rapide.jpg'
 
 const cryptos = [
   { name: 'Bitcoin', symbol: 'BTC', price: '67,432.50', change: '+3.24', logo: btcLogo, color: '#f7931a' },
@@ -24,12 +29,11 @@ const cryptos = [
 ]
 
 const features = [
-  { icon: Shield, title: 'Sécurité maximale', desc: 'Vos actifs sont protégés par un chiffrement de niveau militaire et une assurance jusqu\'à 250M€.' },
-  { icon: Zap, title: 'Trading ultra-rapide', desc: 'Exécution des ordres en moins de 10ms grâce à notre infrastructure de pointe.' },
-  { icon: Lock, title: 'Stockage à froid', desc: '98% des fonds sont stockés hors ligne dans des coffres sécurisés multi-signatures.' },
-  { icon: BarChart3, title: 'Analyses avancées', desc: 'Outils professionnels, graphiques en temps réel et indicateurs techniques.' },
-  { icon: Coins, title: 'Staking & Épargne', desc: 'Générez des revenus passifs jusqu\'à 12% APY sur vos cryptomonnaies.' },
-  { icon: Users, title: 'Communauté active', desc: 'Rejoignez 2M+ d\'investisseurs et partagez vos stratégies de trading.' },
+  { icon: Shield, title: 'Sécurité maximale', desc: 'Vos actifs sont protégés par un chiffrement de niveau militaire et une assurance jusqu\'à 250M€.', image: securiteImage },
+  { icon: Zap, title: 'Trading ultra-rapide', desc: 'Exécution des ordres en moins de 10ms grâce à notre infrastructure de pointe.', image: tradingImage },
+  { icon: Lock, title: 'Stockage à froid', desc: '98% des fonds sont stockés hors ligne dans des coffres sécurisés multi-signatures.', image: stockageImage },
+  { icon: BarChart3, title: 'Analyses avancées', desc: 'Outils professionnels, graphiques en temps réel et indicateurs techniques.', image: analysesImage },
+  { icon: Users, title: 'Communauté active', desc: 'Rejoignez 2M+ d\'investisseurs et partagez vos stratégies de trading.', image: communauteImage },
 ]
 
 const faqs = [
@@ -147,12 +151,18 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
-              <div key={i} className="card group hover:scale-[1.02] transition-all duration-300">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))' }}>
-                  <f.icon className="w-7 h-7" style={{ color: '#6366f1' }} />
+              <div key={i} className="card group hover:scale-[1.02] transition-all duration-300 overflow-hidden">
+                {f.image ? (
+                  <img src={f.image} alt={f.title} className="w-full h-44 object-cover rounded-t-3xl" />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 mt-5 mx-auto group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))' }}>
+                    <f.icon className="w-7 h-7" style={{ color: '#6366f1' }} />
+                  </div>
+                )}
+                <div className="p-6">
+                  <h3 className="text-lg font-bold mb-2" style={{ color: '#e2e8f0' }}>{f.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: '#64748b' }}>{f.desc}</p>
                 </div>
-                <h3 className="text-lg font-bold mb-2" style={{ color: '#e2e8f0' }}>{f.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#64748b' }}>{f.desc}</p>
               </div>
             ))}
           </div>

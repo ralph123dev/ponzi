@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, Loader2 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseConfigured } from '../lib/supabase'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -13,6 +13,10 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!supabaseConfigured) {
+      setError("Backend non configuré : ajoutez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env")
+      return
+    }
     setLoading(true)
     setError(null)
 
@@ -35,21 +39,7 @@ export default function Login() {
   }
 
   const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          queryParams: {
-            prompt: 'select_account',
-            access_type: 'offline',
-          },
-          redirectTo: window.location.origin,
-        },
-      })
-      if (error) throw error
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la connexion avec Google")
-    }
+    setError('Connexion par Google pas encore disponible')
   }
 
   return (
