@@ -289,31 +289,175 @@ export default function Dashboard() {
       return
     }
 
+    if (!user) {
+      setVerificationMessage('Vous devez être connecté pour effectuer un dépôt.')
+      setVerificationOk(false)
+      return
+    }
+
     setOcrLoading(true)
     setVerificationMessage(null)
     setVerificationOk(false)
 
     try {
       const worker = await createWorker('fra')
-      const { data: { text } } = await worker.recognize(selectedFileObject)
+      const { data: { text: rawText } } = await worker.recognize(selectedFileObject)
       await worker.terminate()
-      const amountMatch = text.match(/(\d{1,3}(?:[.\s]\d{3})*(?:[.,]\d{2})?)/)
-      const extractedAmount = amountMatch ? amountMatch[1].replace(/\s/g, '').replace(',', '.') : ''
-      const amountToCredit = Number(extractedAmount || '0')
 
-      if (amountToCredit > 0 && profile) {
-        setProfile({ ...profile, balance: (profile.balance || 0) + amountToCredit })
-        setVerificationMessage(`Dépôt validé. ${amountToCredit.toLocaleString()} FCFA ont été ajoutés à votre solde.`)
-        setVerificationOk(true)
-        window.setTimeout(() => {
-          resetDepositFlow()
-        }, 1200)
+      // Ignorer l'élément "Frais" en filtrant les lignes contenant ce mot
+      const lines = rawText.split('\n')
+      const filteredLines = lines.filter(line => !line.toLowerCase().includes('frais'))
+      const text = filteredLines.join('\n')
+
+      // 1. Extraction du montant et de la devise
+      let extractedAmount = 0
+      let currency = 'USDT'
+
+      // Recherche du mot "Montant" suivi de la valeur et éventuellement de la devise
+      const montantMatch = text.match(/montant\s*[:\-]*\s*([\d\s.,]+)(?:\s*([a-zA-Z]{3,5}))?/i)
+      if (montantMatch) {
+        let numStr = montantMatch[1].trim()
+        numStr = numStr.replace(/\s/g, '')
+        if (numStr.includes(',') && numStr.includes('.')) {
+          numStr = numStr.replace(/,/g, '')
+        } else if (numStr.includes(',')) {
+          numStr = numStr.replace(/,/g, '.')
+        }
+        extractedAmount = parseFloat(numStr)
+        if (montantMatch[2]) {
+          currency = montantMatch[2].toUpperCase()
+        }
       } else {
-        setVerificationMessage('L’analyse n’a pas détecté un montant valide. Veuillez réessayer avec une autre capture.')
-        setVerificationOk(false)
+        // Fallback si "Montant" n'est pas trouvé
+        const amountMatch = text.match(/(\d{1,3}(?:[.\s]\d{3})*(?:[.,]\d{2})?)/)
+        if (amountMatch) {
+          const numStr = amountMatch[1].replace(/\s/g, '').replace(',', '.')
+          extractedAmount = Number(numStr || '0')
+        }
       }
+
+      // Extraction et détection de la devise n'importe où dans le texte si pas détectée
+      const upperText = text.toUpperCase()
+      if (upperText.includes('TRX')) {
+        currency = 'TRX'
+      } else if (upperText.includes('USDT')) {
+        currency = 'USDT'
+      } else if (upperText.includes('USDC')) {
+        currency = 'USDC'
+      }
+
+      // 2. Extraction du TXID (Hash de transaction 64 caractères)
+      let txid = ''
+      const hex64Match = text.match(/\b(?:0x)?[a-fA-F0-9]{64}\b/)
+      if (hex64Match) {
+        txid = hex64Match[0]
+      } else {
+        const txidLabelMatch = text.match(/(?:txid|hash|transaction\s*id|id\s*de\s*transaction|id\s*trans)\s*[:\-\s]+([a-zA-Z0-9]{12,64})/i)
+        if (txidLabelMatch) {
+          txid = txidLabelMatch[1]
+        }
+      }
+
+      if (!txid) {
+        setVerificationMessage('Le TXID n’a pas pu être détecté sur la capture. Veuillez réessayer avec une image plus nette contenant le TXID.')
+        setVerificationOk(false)
+        return
+      }
+
+      if (extractedAmount <= 0) {
+        setVerificationMessage('L’analyse n’a pas détecté un montant valide supérieur à 0. Veuillez réessayer.')
+        setVerificationOk(false)
+        return
+      }
+
+      // 3. Vérification de l'existence du TXID sur Supabase
+      const { data: existingDeposit, error: checkError } = await supabase
+        .from('deposits')
+        .select('id')
+        .eq('txid', txid)
+        .maybeSingle()
+
+      if (checkError) {
+        console.error('Erreur lors de la vérification du TXID:', checkError)
+      }
+
+      if (existingDeposit) {
+        setVerificationMessage('Cette transaction ne peut pas être effectuée car cet ID de transaction (TXID) existe déjà et le solde ne peut pas être ajouté.')
+        setVerificationOk(false)
+        return
+      }
+
+      // 4. Calcul de la conversion en FCFA
+      const USD_TO_FCFA = 610
+      let amountInFcfa = 0
+
+      if (currency === 'TRX') {
+        let trxPriceInUsd = 0.125 // Fallback par défaut
+        try {
+          const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=TRXUSDT')
+          const data = await res.json()
+          if (data && data.price) {
+            trxPriceInUsd = parseFloat(data.price)
+          }
+        } catch (e) {
+          console.error('Erreur de récupération du taux TRX:', e)
+        }
+        amountInFcfa = Math.round(extractedAmount * trxPriceInUsd * USD_TO_FCFA)
+      } else {
+        amountInFcfa = Math.round(extractedAmount * USD_TO_FCFA)
+      }
+
+      if (amountInFcfa <= 0) {
+        setVerificationMessage('Le montant converti calculé est invalide.')
+        setVerificationOk(false)
+        return
+      }
+
+      // 5. Enregistrement du dépôt et mise à jour du profil sur Supabase
+      const { error: insertError } = await supabase
+        .from('deposits')
+        .insert({
+          user_id: user.id,
+          amount: amountInFcfa,
+          currency: currency,
+          txid: txid
+        })
+
+      if (insertError) {
+        throw insertError
+      }
+
+      const { data: latestProfile } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('id', user.id)
+        .single()
+
+      const currentBalance = latestProfile ? Number(latestProfile.balance || 0) : Number(profile?.balance || 0)
+      const newBalance = currentBalance + amountInFcfa
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ balance: newBalance })
+        .eq('id', user.id)
+
+      if (updateError) {
+        throw updateError
+      }
+
+      // Mise à jour de l'état local
+      if (profile) {
+        setProfile({ ...profile, balance: newBalance })
+      }
+      setVerificationMessage(`Dépôt validé. ${amountInFcfa.toLocaleString()} FCFA (converti depuis ${extractedAmount} ${currency}) ont été ajoutés à votre solde. (TXID: ${txid.substring(0, 8)}...)`)
+      setVerificationOk(true)
+
+      window.setTimeout(() => {
+        resetDepositFlow()
+      }, 3000)
     } catch (error) {
-      setVerificationMessage('L’analyse de l’image a échoué. Veuillez réessayer avec une meilleure capture.')
+      console.error('Détails de l’erreur de dépôt:', error)
+      setVerificationMessage('L’analyse de l’image ou la connexion avec la base de données a échoué. Veuillez réessayer.')
       setVerificationOk(false)
     } finally {
       setOcrLoading(false)

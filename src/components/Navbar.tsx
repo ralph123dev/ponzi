@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { TrendingUp, Menu, X, ChevronDown, Leaf, Building2, Trees, Coins, LogOut, User as UserIcon } from 'lucide-react'
+import { Menu, X, ChevronDown, Leaf, Building2, Trees, Coins, LogOut, User as UserIcon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import logoImg from '../assets/img/logo.png'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -42,10 +43,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
             <div className="relative">
-              <div className="absolute inset-0 rounded-xl blur-md opacity-60 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)' }} />
-              <div className="relative p-2.5 rounded-xl group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}>
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
+              <img src={logoImg} alt="Logo" className="w-10 h-10 object-contain rounded-xl" />
             </div>
             <span className="text-2xl font-bold glow-text">Crypto Invest</span>
           </Link>
