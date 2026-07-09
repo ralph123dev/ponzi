@@ -57,6 +57,7 @@ export default function Dashboard() {
   const [walletAddress, setWalletAddress] = useState('')
   const [addressCopied, setAddressCopied] = useState(false)
   const [canProceedToUpload, setCanProceedToUpload] = useState(false)
+  const [proofOnlyDeposit, setProofOnlyDeposit] = useState(false)
   const [showInvestmentModal, setShowInvestmentModal] = useState(false)
   const [selectedInvestmentPlan, setSelectedInvestmentPlan] = useState<string | null>(null)
   const [investmentAmount, setInvestmentAmount] = useState('')
@@ -262,6 +263,7 @@ export default function Dashboard() {
     setWalletAddress('')
     setAddressCopied(false)
     setCanProceedToUpload(false)
+    setProofOnlyDeposit(false)
   }
 
   const handleCopyAddress = async () => {
@@ -307,20 +309,44 @@ export default function Dashboard() {
       setOcrDate(extractedDate || null)
       setOcrPhone(extractedPhone || null)
 
-      const addressOk = !!walletAddress && (text.includes(walletAddress) || extractedPhone.includes(walletAddress))
-      const dateOk = !!manualDate && new Date(manualDate) <= new Date(new Date().setHours(23, 59, 59, 999))
       const amountOk = !!extractedAmount
 
-      if (addressOk && dateOk && amountOk) {
-        setVerificationMessage('Capture analysée correctement. Le dépôt semble conforme aux informations fournies.')
-        setVerificationOk(true)
+      if (proofOnlyDeposit) {
+        const amountToCredit = Number(extractedAmount || '0')
+        if (amountOk && profile) {
+          setProfile({ ...profile, balance: (profile.balance || 0) + amountToCredit })
+          setVerificationMessage(`Dépôt validé. ${amountToCredit.toLocaleString()} FCFA ont été ajoutés à votre solde.`)
+          setVerificationOk(true)
+          window.setTimeout(() => {
+            resetDepositFlow()
+          }, 1200)
+        } else {
+          setVerificationMessage('Erreur : la capture n’a pas pu être validée.')
+          setVerificationOk(false)
+          window.setTimeout(() => {
+            resetDepositFlow()
+          }, 1200)
+        }
       } else {
-        setVerificationMessage('La capture a été analysée, mais certaines informations ne correspondent pas encore au dépôt attendu.')
-        setVerificationOk(false)
+        const addressOk = !!walletAddress && (text.includes(walletAddress) || extractedPhone.includes(walletAddress))
+        const dateOk = !!manualDate && new Date(manualDate) <= new Date(new Date().setHours(23, 59, 59, 999))
+
+        if (addressOk && dateOk && amountOk) {
+          setVerificationMessage('Capture analysée correctement. Le dépôt semble conforme aux informations fournies.')
+          setVerificationOk(true)
+        } else {
+          setVerificationMessage('La capture a été analysée, mais certaines informations ne correspondent pas encore au dépôt attendu.')
+          setVerificationOk(false)
+        }
       }
     } catch (error) {
       setVerificationMessage('L’analyse de l’image a échoué. Veuillez réessayer avec une meilleure capture.')
       setVerificationOk(false)
+      if (proofOnlyDeposit) {
+        window.setTimeout(() => {
+          resetDepositFlow()
+        }, 1200)
+      }
     } finally {
       setOcrLoading(false)
     }
@@ -820,6 +846,18 @@ export default function Dashboard() {
                         </button>
                       ))}
                     </div>
+                    <button
+                      onClick={() => {
+                        setDepositMethod('crypto')
+                        setProofOnlyDeposit(true)
+                        setSelectedNetwork(null)
+                        setWalletAddress('')
+                        setDepositStep('upload')
+                      }}
+                      className="w-full rounded-2xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-500"
+                    >
+                      J’ai déjà effectué un dépôt
+                    </button>
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
@@ -896,28 +934,37 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                <div>
-                  <label className="mb-2 block text-sm text-slate-300">Date du dépôt</label>
-                  <input
-                    type="date"
-                    value={manualDate}
-                    onChange={(e) => setManualDate(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-white"
-                  />
-                </div>
+                {!proofOnlyDeposit && (
+                  <>
+                    <div>
+                      <label className="mb-2 block text-sm text-slate-300">Date du dépôt</label>
+                      <input
+                        type="date"
+                        value={manualDate}
+                        onChange={(e) => setManualDate(e.target.value)}
+                        className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-white"
+                      />
+                    </div>
 
-                <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-                  <div className="flex items-center gap-2 text-sm text-white">
-                    <img src={selectedNetwork ? networkConfig[selectedNetwork].logo : erc20Logo} alt={selectedNetwork || 'Crypto'} className="h-5 w-5 rounded-full object-cover" />
-                    <span>Adresse à utiliser pour le dépôt</span>
-                  </div>
-                  <div className="mt-2 break-all rounded-xl bg-black/20 p-3 text-sm text-slate-300">
-                    {walletAddress || 'Sélectionnez un réseau pour afficher l’adresse'}
-                  </div>
-                </div>
+                    <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+                      <div className="flex items-center gap-2 text-sm text-white">
+                        <img src={selectedNetwork ? networkConfig[selectedNetwork].logo : erc20Logo} alt={selectedNetwork || 'Crypto'} className="h-5 w-5 rounded-full object-cover" />
+                        <span>Adresse à utiliser pour le dépôt</span>
+                      </div>
+                      <div className="mt-2 break-all rounded-xl bg-black/20 p-3 text-sm text-slate-300">
+                        {walletAddress || 'Sélectionnez un réseau pour afficher l’adresse'}
+                      </div>
+                    </div>
+                  </>
+                )}
 
-                {ocrLoading && <div className="text-sm text-slate-400">Analyse de la capture en cours…</div>}
-                {ocrText && (
+                {ocrLoading && (
+                  <div className="inline-flex items-center gap-2 text-sm text-slate-400">
+                    <span className="h-4 w-4 animate-spin rounded-full border border-white/20 border-t-white" />
+                    Analyse de la capture en cours…
+                  </div>
+                )}
+                {ocrText && proofOnlyDeposit && (
                   <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-3 text-sm text-slate-300">
                     <div className="font-semibold text-white mb-2">Résultat de l’analyse</div>
                     <div>Montant détecté automatiquement : {ocrAmount || 'non détecté'}</div>
@@ -934,13 +981,18 @@ export default function Dashboard() {
                 )}
 
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setDepositStep('instructions')} className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-slate-300">
-                    Retour
+                  <button onClick={resetDepositFlow} className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-slate-300">
+                    Annuler
                   </button>
-                  <button onClick={handleDepositSubmit} className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white">
-                    Valider le dépôt
-                  </button>
+                  {!proofOnlyDeposit && (
+                    <button onClick={handleDepositSubmit} className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white">
+                      Valider le dépôt
+                    </button>
+                  )}
                 </div>
+                {proofOnlyDeposit && (
+                  <p className="mt-3 text-sm text-slate-400">Téléversez juste la capture d’écran. Si la vérification passe, le solde se mettra à jour automatiquement.</p>
+                )}
               </div>
             )}
 
