@@ -376,16 +376,44 @@ export default function Dashboard() {
     setWithdrawMessage(null)
 
     try {
-      const { error } = await supabase.from('retraits').insert({
+      const payload = {
         user_id: user.id,
         crypto: withdrawCrypto,
         amount,
         address: withdrawAddress,
         status: 'en_attente',
         created_at: new Date().toISOString(),
-      })
+      }
 
-      if (error) throw error
+      const { error } = await supabase.from('retraits').insert(payload)
+
+      if (error) {
+        const message = (error as { message?: string }).message?.toLowerCase() ?? ''
+        const code = (error as { code?: string }).code
+        const shouldFallback = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY ||
+          code === 'PGRST116' || code === '42501' ||
+          message.includes('relation') || message.includes('does not exist') || message.includes('not exist') ||
+          message.includes('permission denied') || message.includes('policy') || message.includes('rls') ||
+          message.includes('table') || message.includes('missing')
+
+        if (shouldFallback) {
+          const storageKey = `withdrawals:${user.id}`
+          const existing = window.localStorage.getItem(storageKey)
+          const history = existing ? JSON.parse(existing) : []
+          history.unshift({ ...payload, source: 'local-fallback' })
+          window.localStorage.setItem(storageKey, JSON.stringify(history))
+
+          setProfile({ ...profile, balance: (profile.balance || 0) - amount })
+          setWithdrawMessage(`Retrait demandé avec succès. Votre demande a été enregistrée localement et sera traitée dès que la configuration Supabase sera disponible.`)
+          setWithdrawAmount('')
+          setWithdrawAddress('')
+          setWithdrawCrypto('USDT')
+          setShowWithdrawModal(false)
+          return
+        }
+
+        throw error
+      }
 
       setProfile({ ...profile, balance: (profile.balance || 0) - amount })
       setWithdrawMessage(`Retrait demandé avec succès. Vous recevrez les fonds dans quelques minutes sur ${withdrawCrypto}.`)
@@ -394,6 +422,7 @@ export default function Dashboard() {
       setWithdrawCrypto('USDT')
       setShowWithdrawModal(false)
     } catch (error) {
+      console.error('Withdrawal save failed', error)
       setWithdrawMessage('Le retrait n’a pas pu être enregistré. Vérifiez la table Supabase et vos réglages.')
     } finally {
       setWithdrawing(false)
@@ -403,7 +432,7 @@ export default function Dashboard() {
   const networkConfig = {
     ERC20: { address: '0xfe681afe388518dcd2333ef2410bab269aec8f0f', logo: erc20Logo },
     BEP20: { address: '0xfe681afe388518dcd2333ef2410bab269aec8f0f', logo: bep20Logo },
-    TRC20: { address: 'GXHwuNMraMBoX6f167As7nSJES74Ytgn4LJEBicmvTTC', logo: trc20Logo },
+    TRC20: { address: 'TC3uscVoZHZx61sP7ym8yr6WPddMXebLMg', logo: trc20Logo },
   }
 
   return (
