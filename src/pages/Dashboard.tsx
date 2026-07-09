@@ -44,20 +44,17 @@ export default function Dashboard() {
   const [depositStep, setDepositStep] = useState<'select' | 'instructions' | 'address' | 'upload' | 'review'>('select')
   const [selectedNetwork, setSelectedNetwork] = useState<'ERC20' | 'BEP20' | 'TRC20' | null>(null)
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [selectedFileObject, setSelectedFileObject] = useState<File | null>(null)
   const [selectedFileName, setSelectedFileName] = useState('')
   const [ocrLoading, setOcrLoading] = useState(false)
   const [ocrAmount, setOcrAmount] = useState<string | null>(null)
-  const [ocrDate, setOcrDate] = useState<string | null>(null)
-  const [ocrPhone, setOcrPhone] = useState<string | null>(null)
   const [ocrText, setOcrText] = useState('')
-  const [manualDate, setManualDate] = useState('')
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null)
   const [verificationOk, setVerificationOk] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [walletAddress, setWalletAddress] = useState('')
   const [addressCopied, setAddressCopied] = useState(false)
   const [canProceedToUpload, setCanProceedToUpload] = useState(false)
-  const [proofOnlyDeposit, setProofOnlyDeposit] = useState(false)
   const [showInvestmentModal, setShowInvestmentModal] = useState(false)
   const [selectedInvestmentPlan, setSelectedInvestmentPlan] = useState<string | null>(null)
   const [investmentAmount, setInvestmentAmount] = useState('')
@@ -249,13 +246,11 @@ export default function Dashboard() {
     setDepositMethod(null)
     setDepositStep('select')
     setSelectedFile(null)
+    setSelectedFileObject(null)
     setSelectedFileName('')
     setOcrLoading(false)
     setOcrAmount(null)
-    setOcrDate(null)
-    setOcrPhone(null)
     setOcrText('')
-    setManualDate('')
     setVerificationMessage(null)
     setVerificationOk(false)
     setSubmitted(false)
@@ -263,7 +258,6 @@ export default function Dashboard() {
     setWalletAddress('')
     setAddressCopied(false)
     setCanProceedToUpload(false)
-    setProofOnlyDeposit(false)
   }
 
   const handleCopyAddress = async () => {
@@ -279,105 +273,60 @@ export default function Dashboard() {
     }
   }
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
     const reader = new FileReader()
     reader.onload = () => setSelectedFile(reader.result as string)
     reader.readAsDataURL(file)
+    setSelectedFileObject(file)
     setSelectedFileName(file.name)
+    setOcrAmount(null)
+    setOcrText('')
+    setVerificationMessage(null)
+    setVerificationOk(false)
+  }
+
+  const handleDepositSubmit = async () => {
+    if (!selectedFileObject) {
+      setVerificationMessage('Veuillez téléverser une capture d’écran avant de continuer.')
+      setVerificationOk(false)
+      return
+    }
+
     setOcrLoading(true)
     setVerificationMessage(null)
     setVerificationOk(false)
 
     try {
       const worker = await createWorker('fra')
-      const { data: { text } } = await worker.recognize(file)
+      const { data: { text } } = await worker.recognize(selectedFileObject)
       await worker.terminate()
       setOcrText(text)
 
       const amountMatch = text.match(/(\d{1,3}(?:[.\s]\d{3})*(?:[.,]\d{2})?)/)
-      const dateMatch = text.match(/(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/)
-      const phoneMatch = text.match(/(?:\+?237|0)[0-9\s.-]{8,12}/)
-
       const extractedAmount = amountMatch ? amountMatch[1].replace(/\s/g, '').replace(',', '.') : ''
-      const extractedDate = dateMatch ? dateMatch[1] : ''
-      const extractedPhone = phoneMatch ? phoneMatch[0].replace(/[^\d+]/g, '') : ''
+      const amountToCredit = Number(extractedAmount || '0')
 
-      setOcrAmount(extractedAmount || null)
-      setOcrDate(extractedDate || null)
-      setOcrPhone(extractedPhone || null)
-
-      const amountOk = !!extractedAmount
-
-      if (proofOnlyDeposit) {
-        const amountToCredit = Number(extractedAmount || '0')
-        if (amountOk && profile) {
-          setProfile({ ...profile, balance: (profile.balance || 0) + amountToCredit })
-          setVerificationMessage(`Dépôt validé. ${amountToCredit.toLocaleString()} FCFA ont été ajoutés à votre solde.`)
-          setVerificationOk(true)
-          window.setTimeout(() => {
-            resetDepositFlow()
-          }, 1200)
-        } else {
-          setVerificationMessage('Erreur : la capture n’a pas pu être validée.')
-          setVerificationOk(false)
-          window.setTimeout(() => {
-            resetDepositFlow()
-          }, 1200)
-        }
+      if (amountToCredit > 0 && profile) {
+        setProfile({ ...profile, balance: (profile.balance || 0) + amountToCredit })
+        setOcrAmount(extractedAmount || null)
+        setVerificationMessage(`Dépôt validé. ${amountToCredit.toLocaleString()} FCFA ont été ajoutés à votre solde.`)
+        setVerificationOk(true)
+        window.setTimeout(() => {
+          resetDepositFlow()
+        }, 1200)
       } else {
-        const addressOk = !!walletAddress && (text.includes(walletAddress) || extractedPhone.includes(walletAddress))
-        const dateOk = !!manualDate && new Date(manualDate) <= new Date(new Date().setHours(23, 59, 59, 999))
-
-        if (addressOk && dateOk && amountOk) {
-          setVerificationMessage('Capture analysée correctement. Le dépôt semble conforme aux informations fournies.')
-          setVerificationOk(true)
-        } else {
-          setVerificationMessage('La capture a été analysée, mais certaines informations ne correspondent pas encore au dépôt attendu.')
-          setVerificationOk(false)
-        }
+        setVerificationMessage('L’analyse n’a pas détecté un montant valide. Veuillez réessayer avec une autre capture.')
+        setVerificationOk(false)
       }
     } catch (error) {
       setVerificationMessage('L’analyse de l’image a échoué. Veuillez réessayer avec une meilleure capture.')
       setVerificationOk(false)
-      if (proofOnlyDeposit) {
-        window.setTimeout(() => {
-          resetDepositFlow()
-        }, 1200)
-      }
     } finally {
       setOcrLoading(false)
     }
-  }
-
-  const handleDepositSubmit = () => {
-    const resolvedAmount = ocrAmount || '0'
-
-    if (!selectedNetwork || !walletAddress || !resolvedAmount || !manualDate) {
-      setVerificationMessage('Veuillez renseigner le réseau, l’adresse, la date du dépôt et assurez-vous que le montant a bien été détecté sur la capture.')
-      setVerificationOk(false)
-      return
-    }
-
-    const dateOk = new Date(manualDate) <= new Date(new Date().setHours(23, 59, 59, 999))
-    const amountOk = Number(resolvedAmount) > 0
-
-    if (!dateOk || !amountOk) {
-      setVerificationMessage('Le dépôt ne correspond pas à une date ou à un montant valide.')
-      setVerificationOk(false)
-      return
-    }
-
-    const amountToCredit = Number(resolvedAmount)
-    if (profile) {
-      setProfile({ ...profile, balance: (profile.balance || 0) + amountToCredit })
-    }
-
-    setSubmitted(true)
-    setVerificationMessage(`Dépôt validé. ${amountToCredit.toLocaleString()} FCFA ont été ajoutés à votre solde.`)
-    setVerificationOk(true)
   }
 
   const handleWithdrawSubmit = async () => {
@@ -848,10 +797,6 @@ export default function Dashboard() {
                     </div>
                     <button
                       onClick={() => {
-                        setDepositMethod('crypto')
-                        setProofOnlyDeposit(true)
-                        setSelectedNetwork(null)
-                        setWalletAddress('')
                         setDepositStep('upload')
                       }}
                       className="w-full rounded-2xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-500"
@@ -934,45 +879,12 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                {!proofOnlyDeposit && (
-                  <>
-                    <div>
-                      <label className="mb-2 block text-sm text-slate-300">Date du dépôt</label>
-                      <input
-                        type="date"
-                        value={manualDate}
-                        onChange={(e) => setManualDate(e.target.value)}
-                        className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-white"
-                      />
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-                      <div className="flex items-center gap-2 text-sm text-white">
-                        <img src={selectedNetwork ? networkConfig[selectedNetwork].logo : erc20Logo} alt={selectedNetwork || 'Crypto'} className="h-5 w-5 rounded-full object-cover" />
-                        <span>Adresse à utiliser pour le dépôt</span>
-                      </div>
-                      <div className="mt-2 break-all rounded-xl bg-black/20 p-3 text-sm text-slate-300">
-                        {walletAddress || 'Sélectionnez un réseau pour afficher l’adresse'}
-                      </div>
-                    </div>
-                  </>
-                )}
-
                 {ocrLoading && (
                   <div className="inline-flex items-center gap-2 text-sm text-slate-400">
                     <span className="h-4 w-4 animate-spin rounded-full border border-white/20 border-t-white" />
                     Analyse de la capture en cours…
                   </div>
                 )}
-                {ocrText && proofOnlyDeposit && (
-                  <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-3 text-sm text-slate-300">
-                    <div className="font-semibold text-white mb-2">Résultat de l’analyse</div>
-                    <div>Montant détecté automatiquement : {ocrAmount || 'non détecté'}</div>
-                    <div>Date détectée : {ocrDate || 'non détectée'}</div>
-                    <div>Adresse détectée : {ocrPhone || 'non détectée'}</div>
-                  </div>
-                )}
-
                 {verificationMessage && (
                   <div className={`flex items-start gap-2 rounded-2xl border p-3 text-sm ${verificationOk ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'}`}>
                     {verificationOk ? <CheckCircle2 className="mt-0.5 w-4 h-4" /> : <AlertTriangle className="mt-0.5 w-4 h-4" />}
@@ -984,15 +896,17 @@ export default function Dashboard() {
                   <button onClick={resetDepositFlow} className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-slate-300">
                     Annuler
                   </button>
-                  {!proofOnlyDeposit && (
-                    <button onClick={handleDepositSubmit} className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white">
-                      Valider le dépôt
+                  {selectedFile && (
+                    <button
+                      onClick={handleDepositSubmit}
+                      disabled={ocrLoading}
+                      className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      Suivant
                     </button>
                   )}
                 </div>
-                {proofOnlyDeposit && (
-                  <p className="mt-3 text-sm text-slate-400">Téléversez juste la capture d’écran. Si la vérification passe, le solde se mettra à jour automatiquement.</p>
-                )}
+                <p className="mt-3 text-sm text-slate-400">Téléversez la capture d’écran puis cliquez sur Suivant pour lancer l’analyse. Si tout est bon, le solde sera ajouté automatiquement et la pop-up se fermera.</p>
               </div>
             )}
 
