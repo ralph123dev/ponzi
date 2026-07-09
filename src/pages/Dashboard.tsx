@@ -47,8 +47,6 @@ export default function Dashboard() {
   const [selectedFileObject, setSelectedFileObject] = useState<File | null>(null)
   const [selectedFileName, setSelectedFileName] = useState('')
   const [ocrLoading, setOcrLoading] = useState(false)
-  const [ocrAmount, setOcrAmount] = useState<string | null>(null)
-  const [ocrText, setOcrText] = useState('')
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null)
   const [verificationOk, setVerificationOk] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -249,8 +247,6 @@ export default function Dashboard() {
     setSelectedFileObject(null)
     setSelectedFileName('')
     setOcrLoading(false)
-    setOcrAmount(null)
-    setOcrText('')
     setVerificationMessage(null)
     setVerificationOk(false)
     setSubmitted(false)
@@ -282,8 +278,6 @@ export default function Dashboard() {
     reader.readAsDataURL(file)
     setSelectedFileObject(file)
     setSelectedFileName(file.name)
-    setOcrAmount(null)
-    setOcrText('')
     setVerificationMessage(null)
     setVerificationOk(false)
   }
@@ -303,15 +297,12 @@ export default function Dashboard() {
       const worker = await createWorker('fra')
       const { data: { text } } = await worker.recognize(selectedFileObject)
       await worker.terminate()
-      setOcrText(text)
-
       const amountMatch = text.match(/(\d{1,3}(?:[.\s]\d{3})*(?:[.,]\d{2})?)/)
       const extractedAmount = amountMatch ? amountMatch[1].replace(/\s/g, '').replace(',', '.') : ''
       const amountToCredit = Number(extractedAmount || '0')
 
       if (amountToCredit > 0 && profile) {
         setProfile({ ...profile, balance: (profile.balance || 0) + amountToCredit })
-        setOcrAmount(extractedAmount || null)
         setVerificationMessage(`Dépôt validé. ${amountToCredit.toLocaleString()} FCFA ont été ajoutés à votre solde.`)
         setVerificationOk(true)
         window.setTimeout(() => {
