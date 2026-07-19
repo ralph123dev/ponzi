@@ -43,7 +43,7 @@ export default function Dashboard() {
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [depositMethod, setDepositMethod] = useState<'crypto' | null>(null)
   const [depositStep, setDepositStep] = useState<'select' | 'instructions' | 'address' | 'upload' | 'review'>('select')
-  const [selectedNetwork, setSelectedNetwork] = useState<'ERC20' | 'BEP20' | 'TRC20' | null>(null)
+  const [selectedNetwork, setSelectedNetwork] = useState<'ERC20' | 'BEP20' | 'TRC20' | 'BTC' | null>(null)
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
   const [selectedFileObject, setSelectedFileObject] = useState<File | null>(null)
   const [selectedFileName, setSelectedFileName] = useState('')
