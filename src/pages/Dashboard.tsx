@@ -6,6 +6,7 @@ import { animate } from 'framer-motion'
 import erc20Logo from '../assets/img/erc20.jpg'
 import bep20Logo from '../assets/img/bep20.jpg'
 import trc20Logo from '../assets/img/trc20.jpg'
+import btcLogo from '../assets/img/bitcoin.png'
 import {
   Wallet,
   ArrowDownCircle,
@@ -540,9 +541,10 @@ export default function Dashboard() {
   }
 
   const networkConfig = {
-    ERC20: { address: '0xfe681afe388518dcd2333ef2410bab269aec8f0f', logo: erc20Logo },
-    BEP20: { address: '0xfe681afe388518dcd2333ef2410bab269aec8f0f', logo: bep20Logo },
-    TRC20: { address: 'TC3uscVoZHZx61sP7ym8yr6WPddMXebLMg', logo: trc20Logo },
+    ERC20: { address: '0x81a61Bfad90f77191F7B3465a4CBa3DEA0f9D6eA', logo: erc20Logo },
+    BEP20: { address: '0x81a61Bfad90f77191F7B3465a4CBa3DEA0f9D6eA', logo: bep20Logo },
+    TRC20: { address: 'Moyen disponible dans quelques heures nous y travaillons encore Merci !', logo: trc20Logo },
+    BTC: { address: 'bc1quvq8ax0pex68cjkz3hu3mkaydzat7rrqt683qv', logo: btcLogo },
   }
 
   return (
@@ -566,7 +568,7 @@ export default function Dashboard() {
                   <h2 className="text-5xl md:text-7xl font-black text-white">
                     {loading ? '0' : <Counter value={profile?.balance || 0} />}
                   </h2>
-                  <span className="text-2xl font-bold text-white/90">FCFA</span>
+                  <span className="text-2xl font-bold text-white/90">€</span>
                 </div>
 
                 <div className="flex flex-wrap gap-4">
@@ -596,7 +598,7 @@ export default function Dashboard() {
             <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex gap-4">
               <Info className="w-6 h-6 text-amber-500 shrink-0" />
               <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
-                <strong className="text-amber-500">Note sur le bonus :</strong> Votre bonus de bienvenue (500 FCFA) ne pourra être retiré qu'après avoir effectué au moins un dépôt et généré des gains sur la plateforme.
+                <strong className="text-amber-500">Note sur le bonus :</strong> L'ors de votre premier retrait, vous pourrez retirer avec un bonus qui est de 50€
               </p>
             </div>
 
@@ -727,14 +729,14 @@ export default function Dashboard() {
             </div>
 
             <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-              <label className="mb-2 block text-sm text-slate-300">Montant à investir (minimum 2000 FCFA)</label>
+              <label className="mb-2 block text-sm text-slate-300">Montant à investir (minimul 10€ )</label>
               <input
                 type="number"
                 min="2000"
                 value={investmentAmount}
                 onChange={(e) => setInvestmentAmount(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-white"
-                placeholder="2000"
+                placeholder="10 €"
               />
               <div className="mt-3 text-sm text-slate-400">
                 Les gains seront crédités chaque semaine sur votre tableau de bord.
@@ -911,7 +913,7 @@ export default function Dashboard() {
                       Choisissez le réseau de la crypto que vous souhaitez envoyer, puis continuez pour finaliser votre dépôt.
                     </p>
                     <div className="grid gap-3 md:grid-cols-3">
-                      {(['ERC20', 'BEP20', 'TRC20'] as const).map((network) => (
+                      {(['ERC20', 'BEP20', 'TRC20', 'BTC'] as const).map((network) => (
                         <button
                           key={network}
                           onClick={() => {
@@ -1056,3 +1058,4 @@ export default function Dashboard() {
     </div>
   )
 }
+

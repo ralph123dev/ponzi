@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
-import { Globe, MessageCircle, Send, ArrowUpRight, X } from 'lucide-react'
+import { Mail, Send, ArrowUpRight, X } from 'lucide-react'
 import logoImg from '../assets/img/logo.png'
 
 const INFO_DETAILS: Record<string, { title: string; description: string }> = {
@@ -83,28 +83,29 @@ export default function Footer() {
             <p className="text-sm leading-relaxed mb-6" style={{ color: '#64748b' }}>
               La plateforme d'investissement la plus sécurisée. Rejoignez plus de 2 millions d'investisseurs.
             </p>
-            <div className="flex space-x-3">
-              {[
-                { Icon: Globe, label: 'Globe' },
-                { Icon: MessageCircle, label: 'MessageCircle' },
-                { Icon: Send, label: 'Send' }
-              ].map(({ Icon, label }, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    const info = INFO_DETAILS[label]
-                    if (info) {
-                      setActiveModalContent(info)
-                    }
-                  }}
-                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300"
-                  style={{ background: '#1e293b', color: '#64748b', border: 'none', cursor: 'pointer' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#e2e8f0'; e.currentTarget.style.background = 'rgba(99,102,241,0.2)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.background = '#1e293b' }}
-                >
-                  <Icon className="w-4 h-4" />
-                </button>
-              ))}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-3 sm:space-y-0 mt-3">
+              <a
+                href="mailto:proanto426@gmail.com"
+                className="flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300"
+                style={{ background: '#1e293b', color: '#64748b', textDecoration: 'none' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#e2e8f0'; e.currentTarget.style.background = 'rgba(99,102,241,0.2)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.background = '#1e293b' }}
+              >
+                <Mail className="w-4 h-4" />
+                <span className="text-sm">proanto426@gmail.com</span>
+              </a>
+              <a
+                href="https://t.me/+237689476780"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300"
+                style={{ background: '#1e293b', color: '#64748b', textDecoration: 'none' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#e2e8f0'; e.currentTarget.style.background = 'rgba(99,102,241,0.2)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.background = '#1e293b' }}
+              >
+                <Send className="w-4 h-4" />
+                <span className="text-sm">+237 689 476 780</span>
+              </a>
             </div>
           </div>
 

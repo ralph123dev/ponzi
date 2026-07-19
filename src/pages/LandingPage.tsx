@@ -87,9 +87,9 @@ export default function LandingPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
               {[
-                { value: '2M+', label: 'Utilisateurs actifs' },
-                { value: '€15B+', label: 'Volume échangé' },
-                { value: '200+', label: 'Cryptos disponibles' },
+                { value: '2000', label: 'Utilisateurs actifs' },
+                { value: '€15000+', label: 'Volume échangé' },
+                { value: '5', label: 'Cryptos disponibles' },
                 { value: '99.99%', label: 'Uptime garanti' },
               ].map((stat) => (
                 <div key={stat.label} className="card text-center">
@@ -187,7 +187,7 @@ export default function LandingPage() {
                   Notre infrastructure est auditée par des experts en cybersécurité. Authentification biométrique, chiffrement AES-256 et stockage à froid.
                 </p>
                 <div className="grid grid-cols-2 gap-4">
-                  {['Assurance 250M€', 'Audit Certik', 'SOC 2 Type II', 'ISO 27001'].map((item) => (
+                  {['Assurance 25000 €', 'Audit Certik', 'SOC 2 Type II', 'ISO 27001'].map((item) => (
                     <div key={item} className="flex items-center gap-2 text-sm" style={{ color: '#e2e8f0' }}>
                       <Star className="w-4 h-4" style={{ color: '#f59e0b' }} />
                       {item}
